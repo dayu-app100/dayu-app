@@ -207,9 +207,17 @@ function renderCards() {
         ${c.devices.length
           ? `<button class="btn ghost" style="padding:5px 10px;font-size:12px" onclick="reset('${c.cardKey}')">解绑换机</button>` : ''}
         <button class="btn ghost" style="padding:5px 10px;font-size:12px" onclick="copyKey('${c.cardKey}')">复制</button>
+        <button class="btn red" style="padding:5px 10px;font-size:12px" onclick="del('${c.cardKey}')">删除</button>
       </td>
     </tr>`;
   }).join('') || '<tr><td colspan="8" class="muted" style="text-align:center;padding:20px">暂无卡密，先在上面批量生成</td></tr>';
+}
+
+async function del(key) {
+  if (!confirm('彻底删除 ' + key + '？\n\n删除后不可恢复，已激活的设备授权也会立即失效。')) return;
+  await api('/api/admin/cards/delete', { method: 'POST', body: JSON.stringify({ cardKey: key }) });
+  toast('已删除 ' + key);
+  loadCards();
 }
 
 async function reset(key) {

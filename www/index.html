@@ -118,15 +118,9 @@
       </div>
     </div>
 
-    <!-- 服务器设置（收起） -->
+    <!-- 版本 -->
     <div class="foot">
-      <button onclick="toggleServer()">服务器设置</button>
-      <p class="muted" style="margin-top:10px">大鱼直播助手 v1.2.0</p>
-    </div>
-    <div class="card hidden" id="serverCard">
-      <input class="input normal" id="apiInput" placeholder="http://服务器地址:8787">
-      <button class="btn ghost" style="margin-top:10px" onclick="saveApi()">保存并连接</button>
-      <p class="muted" style="margin-top:8px">App 内使用需填写卡密服务器地址，网页版无需填写。</p>
+      <p class="muted" style="margin-top:10px">大鱼直播助手 v1.3.0</p>
     </div>
   </main>
 
@@ -135,17 +129,19 @@
 
 <script>
 const WX_ID = 'A98988r';
+// 服务器地址内置（改这里即可换服务器，重新打包生效）
+const DEFAULT_API = 'http://192.168.1.25:8787';
 const LS_TOKEN = 'dayu.token';
 const LS_DEVICE = 'dayu.device';
 const LS_API = 'dayu.api';
 let license = null;
 
-// App 内（capacitor:// 或 file://）必须配置服务器地址；网页版直接用同源
+// 优先级：本地覆盖 > 网页同源 > 内置地址
 function apiBase() {
   const saved = localStorage.getItem(LS_API);
   if (saved) return saved.replace(/\/+$/, '');
   if (location.protocol === 'http:' || location.protocol === 'https:') return location.origin;
-  return '';
+  return DEFAULT_API;
 }
 
 function deviceId() {
@@ -204,26 +200,8 @@ function clearLicense() {
   showView(false);
 }
 
-function toggleServer() {
-  const c = document.getElementById('serverCard');
-  c.classList.toggle('hidden');
-  if (!c.classList.contains('hidden')) {
-    document.getElementById('apiInput').value = localStorage.getItem(LS_API) || (location.origin.startsWith('http') ? location.origin : '');
-  }
-}
-
-function saveApi() {
-  const v = document.getElementById('apiInput').value.trim().replace(/\/+$/, '');
-  if (!v) { localStorage.removeItem(LS_API); return toast('已切换为默认地址'); }
-  if (!/^https?:\/\//.test(v)) return toast('地址需以 http:// 或 https:// 开头', true);
-  localStorage.setItem(LS_API, v);
-  toast('已保存，正在连接…');
-  refreshLicense().catch(() => {});
-}
-
 async function activate() {
   const base = apiBase();
-  if (!base) { toggleServer(); return toast('请先填写卡密服务器地址', true); }
   const key = document.getElementById('cardInput').value.trim().toUpperCase();
   if (!key) return toast('请输入卡密', true);
   const btn = document.getElementById('btnActive');
@@ -239,7 +217,7 @@ async function activate() {
     toast(d.permanent ? '激活成功 · 永久授权' : '激活成功 · 剩 ' + d.daysLeft + ' 天');
     await refreshLicense(true);
   } catch (e) {
-    toast('网络错误，请检查服务器地址', true);
+    toast('网络连接失败，请稍后重试', true);
   } finally {
     btn.disabled = false; btn.textContent = '激 活';
   }
@@ -257,7 +235,6 @@ async function refreshLicense(silent) {
   const base = apiBase();
   const token = localStorage.getItem(LS_TOKEN);
   if (!token) { if (!silent) toast('尚未激活', true); throw new Error('NO_TOKEN'); }
-  if (!base) { if (!silent) toast('请先配置服务器地址', true); throw new Error('NO_API'); }
   const r = await fetch(base + '/api/v1/verify', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ token }),
@@ -279,7 +256,6 @@ function logout() {
   const base = apiBase();
   const token = localStorage.getItem(LS_TOKEN);
   if (!token) { showView(false); return; }
-  if (!base) { showView(false); return; }
   try {
     const r = await fetch(base + '/api/v1/verify', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },

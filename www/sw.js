@@ -1,5 +1,5 @@
 // 大鱼 App 离线缓存（仅缓存静态资源，接口请求始终走网络）
-const CACHE = 'dayu-v1.2.0';
+const CACHE = 'dayu-v1.3.0';
 const ASSETS = [
   './',
   './index.html',
