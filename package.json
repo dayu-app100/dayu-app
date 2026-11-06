@@ -1,0 +1,19 @@
+{
+  "name": "dayu-app",
+  "version": "1.1.0",
+  "private": true,
+  "description": "大鱼直播助手 iOS 壳（Capacitor）",
+  "scripts": {
+    "icons": "node scripts/gen-icons.js",
+    "cap:add": "cap add ios",
+    "cap:sync": "cap sync ios",
+    "cap:open": "cap open ios"
+  },
+  "dependencies": {
+    "@capacitor/core": "^6.2.0",
+    "@capacitor/ios": "^6.2.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.2.0"
+  }
+}

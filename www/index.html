@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="大鱼">
+<meta name="theme-color" content="#1D9E75">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="manifest" href="manifest.webmanifest">
+<title>大鱼直播助手</title>
+<style>
+  :root {
+    --brand: #1D9E75; --brand-dark: #0F6E56; --brand-bg: #E1F5EE;
+    --bg: #F4F6F5; --card: #FFFFFF; --line: rgba(0,0,0,.08);
+    --text: #1C1C1A; --muted: #888780; --danger: #A32D2D;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: var(--bg); color: var(--text); min-height: 100vh;
+    display: flex; justify-content: center; -webkit-font-smoothing: antialiased;
+  }
+  .phone { width: 100%; max-width: 430px; min-height: 100vh; padding-bottom: calc(24px + var(--safe-bottom)); }
+  main { padding: calc(20px + var(--safe-top)) 20px 0; }
+  .avatar {
+    width: 88px; height: 88px; border-radius: 50%; object-fit: cover; display: block;
+    margin: 18px auto 0; border: 3px solid #fff; box-shadow: 0 0 0 1px var(--line);
+  }
+  .title { text-align: center; font-size: 19px; font-weight: 500; margin-top: 12px; }
+  .subtitle { text-align: center; font-size: 12px; color: var(--muted); margin-top: 6px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 16px; margin-top: 16px; }
+  .input {
+    width: 100%; border: 1px solid var(--line); border-radius: 12px; padding: 13px;
+    font-size: 15px; letter-spacing: 1px; outline: none; background: #FAFAF8; text-transform: uppercase;
+    text-align: center;
+  }
+  .input:focus { border-color: var(--brand); }
+  .input.normal { text-transform: none; letter-spacing: 0; font-size: 13px; text-align: left; }
+  .btn {
+    display: block; width: 100%; border: 0; border-radius: 12px; padding: 13px;
+    font-size: 15px; font-weight: 500; background: var(--brand); color: #fff; cursor: pointer;
+  }
+  .btn:active { background: var(--brand-dark); }
+  .btn[disabled] { opacity: .55; }
+  .btn.ghost { background: transparent; color: var(--brand-dark); border: 1px solid var(--brand); }
+  .btn.small { padding: 7px 14px; font-size: 13px; width: auto; }
+  .muted { color: var(--muted); font-size: 12px; line-height: 1.65; }
+  .tag { display: inline-block; font-size: 11px; padding: 2px 9px; border-radius: 999px; background: var(--brand-bg); color: var(--brand-dark); }
+  .tag.gold { background: #FAEEDA; color: #854F0B; }
+  .toast {
+    position: fixed; left: 50%; bottom: calc(90px + var(--safe-bottom)); transform: translateX(-50%);
+    background: rgba(28,28,26,.92); color: #fff; font-size: 13px; padding: 10px 18px;
+    border-radius: 999px; opacity: 0; transition: opacity .25s; pointer-events: none; z-index: 99;
+    max-width: 86%; text-align: center;
+  }
+  .toast.show { opacity: 1; }
+  .toast.err { background: rgba(163,45,45,.95); }
+  .row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--line); font-size: 13px; gap: 12px; }
+  .row:last-child { border-bottom: 0; }
+  .row .k { color: var(--muted); flex: none; } .row .v { font-weight: 500; text-align: right; word-break: break-all; }
+  .wx { display: flex; align-items: center; gap: 12px; }
+  .wx .avatar-sm { width: 40px; height: 40px; border-radius: 50%; background: #EAF3DE; display: flex; align-items: center; justify-content: center; flex: none; }
+  .wx .info { flex: 1; min-width: 0; }
+  .wx .info .name { font-size: 14px; font-weight: 500; }
+  .wx .info .id { font-size: 12px; color: var(--muted); font-family: ui-monospace, Menlo, Consolas, monospace; margin-top: 2px; }
+  h3 { font-size: 13px; font-weight: 500; margin-bottom: 8px; }
+  .foot { text-align: center; margin-top: 22px; }
+  .foot button { border: 0; background: none; color: var(--muted); font-size: 12px; cursor: pointer; text-decoration: underline; }
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+<div class="phone">
+  <main>
+    <img class="avatar" src="assets/avatar.jpg" alt="大鱼">
+    <div class="title">大鱼直播助手</div>
+    <div class="subtitle" id="subtitle">一机一码 · 永久授权</div>
+
+    <!-- 登录（未激活） -->
+    <section id="viewLogin">
+      <div class="card">
+        <input class="input" id="cardInput" placeholder="输入卡密激活" autocomplete="off" autocapitalize="characters">
+        <button class="btn" style="margin-top:12px" id="btnActive" onclick="activate()">激 活</button>
+        <p class="muted" style="margin-top:12px;text-align:center">一机一码，激活后永久有效<br>购买或换机解绑请联系微信客服</p>
+      </div>
+    </section>
+
+    <!-- 已激活 -->
+    <section id="viewMember" class="hidden">
+      <div class="card">
+        <div class="row"><span class="k">卡密</span><span class="v" id="licKey">-</span></div>
+        <div class="row"><span class="k">授权类型</span><span class="v" id="licType">-</span></div>
+        <div class="row"><span class="k">有效期</span><span class="v" id="licExp">-</span></div>
+        <div class="row"><span class="k">绑定设备</span><span class="v" id="licDev">-</span></div>
+      </div>
+      <div class="card" style="display:flex;gap:10px">
+        <button class="btn ghost small" style="flex:1" onclick="refreshLicense()">刷新授权</button>
+        <button class="btn ghost small" style="flex:1" onclick="logout()">退出登录</button>
+      </div>
+    </section>
+
+    <!-- 微信客服 -->
+    <div class="card">
+      <h3>微信客服</h3>
+      <div class="wx">
+        <div class="avatar-sm">
+          <svg width="20" height="20" viewBox="0 0 24 24"><path d="M9.2 3C5.2 3 2 5.7 2 9c0 1.9 1.1 3.6 2.8 4.7L4.2 16l2.6-1.3c.7.2 1.5.3 2.4.3h.6a5.6 5.6 0 0 1-.2-1.5c0-3.2 3.1-5.8 6.9-5.8h.6C16.4 5 13.1 3 9.2 3z" fill="#1D9E75"/><path d="M22 13.6c0-2.7-2.6-4.9-5.8-4.9s-5.8 2.2-5.8 4.9 2.6 4.9 5.8 4.9c.7 0 1.4-.1 2-.3l2.2 1.1-.5-1.9c1.3-.9 2.1-2.2 2.1-3.8z" fill="#0F6E56"/></svg>
+        </div>
+        <div class="info">
+          <div class="name">大鱼 · 微信客服</div>
+          <div class="id" id="wxId">A98988r</div>
+        </div>
+        <button class="btn small" onclick="copyWx()">复制</button>
+      </div>
+    </div>
+
+    <!-- 服务器设置（收起） -->
+    <div class="foot">
+      <button onclick="toggleServer()">服务器设置</button>
+      <p class="muted" style="margin-top:10px">大鱼直播助手 v1.2.0</p>
+    </div>
+    <div class="card hidden" id="serverCard">
+      <input class="input normal" id="apiInput" placeholder="http://服务器地址:8787">
+      <button class="btn ghost" style="margin-top:10px" onclick="saveApi()">保存并连接</button>
+      <p class="muted" style="margin-top:8px">App 内使用需填写卡密服务器地址，网页版无需填写。</p>
+    </div>
+  </main>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+const WX_ID = 'A98988r';
+const LS_TOKEN = 'dayu.token';
+const LS_DEVICE = 'dayu.device';
+const LS_API = 'dayu.api';
+let license = null;
+
+// App 内（capacitor:// 或 file://）必须配置服务器地址；网页版直接用同源
+function apiBase() {
+  const saved = localStorage.getItem(LS_API);
+  if (saved) return saved.replace(/\/+$/, '');
+  if (location.protocol === 'http:' || location.protocol === 'https:') return location.origin;
+  return '';
+}
+
+function deviceId() {
+  let id = localStorage.getItem(LS_DEVICE);
+  if (!id) {
+    const rnd = () => Math.random().toString(36).slice(2, 10);
+    id = 'dv-' + rnd() + rnd() + Date.now().toString(36);
+    localStorage.setItem(LS_DEVICE, id);
+  }
+  return id;
+}
+
+function toast(msg, isErr) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (isErr ? ' err' : '');
+  clearTimeout(t._h);
+  t._h = setTimeout(() => (t.className = 'toast'), 2600);
+}
+
+function copyText(text) {
+  if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(text);
+  const ta = document.createElement('textarea');
+  ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.select();
+  try { document.execCommand('copy'); } finally { document.body.removeChild(ta); }
+  return Promise.resolve();
+}
+
+function copyWx() {
+  copyText(WX_ID).then(() => toast('微信号已复制：' + WX_ID));
+}
+
+function showView(member) {
+  document.getElementById('viewLogin').classList.toggle('hidden', member);
+  document.getElementById('viewMember').classList.toggle('hidden', !member);
+}
+
+function renderLicense(d) {
+  license = d;
+  const perm = d.permanent || d.type === 'permanent';
+  document.getElementById('subtitle').innerHTML = perm
+    ? '<span class="tag gold">永久授权 · 已激活</span>'
+    : '<span class="tag">已激活 · 剩 ' + d.daysLeft + ' 天</span>';
+  document.getElementById('licKey').textContent = d.cardKey;
+  document.getElementById('licType').innerHTML = perm ? '<span class="tag gold">一机一码 · 永久</span>' : '<span class="tag">时长卡</span>';
+  document.getElementById('licExp').textContent = perm ? '永久有效' : new Date(d.expiresAt).toLocaleDateString('zh-CN');
+  document.getElementById('licDev').textContent = (d.devices || []).length + ' / ' + d.maxDevices + ' 台';
+  showView(true);
+}
+
+function clearLicense() {
+  license = null;
+  localStorage.removeItem(LS_TOKEN);
+  document.getElementById('subtitle').textContent = '一机一码 · 永久授权';
+  showView(false);
+}
+
+function toggleServer() {
+  const c = document.getElementById('serverCard');
+  c.classList.toggle('hidden');
+  if (!c.classList.contains('hidden')) {
+    document.getElementById('apiInput').value = localStorage.getItem(LS_API) || (location.origin.startsWith('http') ? location.origin : '');
+  }
+}
+
+function saveApi() {
+  const v = document.getElementById('apiInput').value.trim().replace(/\/+$/, '');
+  if (!v) { localStorage.removeItem(LS_API); return toast('已切换为默认地址'); }
+  if (!/^https?:\/\//.test(v)) return toast('地址需以 http:// 或 https:// 开头', true);
+  localStorage.setItem(LS_API, v);
+  toast('已保存，正在连接…');
+  refreshLicense().catch(() => {});
+}
+
+async function activate() {
+  const base = apiBase();
+  if (!base) { toggleServer(); return toast('请先填写卡密服务器地址', true); }
+  const key = document.getElementById('cardInput').value.trim().toUpperCase();
+  if (!key) return toast('请输入卡密', true);
+  const btn = document.getElementById('btnActive');
+  btn.disabled = true; btn.textContent = '激活中…';
+  try {
+    const r = await fetch(base + '/api/v1/activate', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cardKey: key, deviceId: deviceId(), deviceName: deviceName() }),
+    });
+    const d = await r.json();
+    if (!r.ok) { toast(d.msg || d.err, true); return; }
+    localStorage.setItem(LS_TOKEN, d.token);
+    toast(d.permanent ? '激活成功 · 永久授权' : '激活成功 · 剩 ' + d.daysLeft + ' 天');
+    await refreshLicense(true);
+  } catch (e) {
+    toast('网络错误，请检查服务器地址', true);
+  } finally {
+    btn.disabled = false; btn.textContent = '激 活';
+  }
+}
+
+function deviceName() {
+  const ua = navigator.userAgent;
+  if (/iPhone/.test(ua)) return 'iPhone';
+  if (/iPad/.test(ua)) return 'iPad';
+  if (/Android/.test(ua)) return 'Android';
+  return ua.slice(0, 40);
+}
+
+async function refreshLicense(silent) {
+  const base = apiBase();
+  const token = localStorage.getItem(LS_TOKEN);
+  if (!token) { if (!silent) toast('尚未激活', true); throw new Error('NO_TOKEN'); }
+  if (!base) { if (!silent) toast('请先配置服务器地址', true); throw new Error('NO_API'); }
+  const r = await fetch(base + '/api/v1/verify', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token }),
+  });
+  const d = await r.json();
+  if (!r.ok) { clearLicense(); if (!silent) toast(d.msg || d.err, true); throw new Error(d.err); }
+  localStorage.setItem(LS_TOKEN, d.token);
+  renderLicense(d);
+  if (!silent) toast(d.permanent ? '授权有效 · 永久' : '授权有效 · 剩 ' + d.daysLeft + ' 天');
+  return d;
+}
+
+function logout() {
+  clearLicense();
+  toast('已退出（设备位保留）');
+}
+
+(async function init() {
+  const base = apiBase();
+  const token = localStorage.getItem(LS_TOKEN);
+  if (!token) { showView(false); return; }
+  if (!base) { showView(false); return; }
+  try {
+    const r = await fetch(base + '/api/v1/verify', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token }),
+    });
+    const d = await r.json();
+    if (!r.ok) { clearLicense(); } else { localStorage.setItem(LS_TOKEN, d.token); renderLicense(d); }
+  } catch (e) { /* 离线静默 */ }
+})();
+
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+}
+</script>
+</body>
+</html>

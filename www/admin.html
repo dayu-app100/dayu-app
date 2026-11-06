@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>大鱼 · 管理后台</title>
+<style>
+  :root { --brand:#1D9E75; --brand-dark:#0F6E56; --bg:#F4F6F5; --card:#fff; --line:rgba(0,0,0,.08);
+    --text:#1C1C1A; --muted:#888780; --danger:#A32D2D; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; background:var(--bg); color:var(--text); }
+  header { background:var(--brand); color:#fff; padding:14px 22px; font-size:16px; font-weight:500; display:flex; align-items:center; gap:10px; }
+  header svg { width:26px; height:26px; }
+  .wrap { max-width:1080px; margin:0 auto; padding:20px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px 18px; margin-bottom:16px; }
+  .card h2 { font-size:14px; font-weight:500; margin:0 0 12px; }
+  .stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:10px; }
+  .stat { background:#FAFAF8; border:1px solid var(--line); border-radius:12px; padding:12px 14px; }
+  .stat b { display:block; font-size:22px; font-weight:500; color:var(--brand-dark); }
+  .stat span { font-size:12px; color:var(--muted); }
+  label { font-size:12px; color:var(--muted); display:block; margin-bottom:4px; }
+  input { width:100%; border:1px solid var(--line); border-radius:10px; padding:9px 12px; font-size:14px; outline:none; }
+  input:focus { border-color:var(--brand); }
+  .form { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; align-items:end; }
+  .btn { border:0; border-radius:10px; padding:10px 18px; font-size:14px; font-weight:500; background:var(--brand); color:#fff; cursor:pointer; }
+  .btn:hover { background:var(--brand-dark); }
+  .btn.ghost { background:#fff; color:var(--brand-dark); border:1px solid var(--brand); }
+  .btn.red { background:#fff; color:var(--danger); border:1px solid #F0B9B9; }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  th { text-align:left; color:var(--muted); font-weight:400; padding:8px 10px; border-bottom:1px solid var(--line); white-space:nowrap; }
+  td { padding:9px 10px; border-bottom:1px solid var(--line); white-space:nowrap; }
+  tr:last-child td { border-bottom:0; }
+  .pill { font-size:11px; padding:2px 9px; border-radius:999px; }
+  .pill.unused { background:#F1EFE8; color:var(--muted); }
+  .pill.active { background:#E1F5EE; color:var(--brand-dark); }
+  .pill.banned { background:#FCEBEB; color:var(--danger); }
+  .pill.expired { background:#FAEEDA; color:#854F0B; }
+  .mono { font-family:ui-monospace,Consolas,monospace; letter-spacing:.5px; }
+  .muted { color:var(--muted); font-size:12px; }
+  .scroll { overflow:auto; }
+  .toolbar { display:flex; gap:10px; margin-bottom:12px; flex-wrap:wrap; }
+  .toast { position:fixed; left:50%; bottom:30px; transform:translateX(-50%); background:rgba(28,28,26,.92); color:#fff;
+    font-size:13px; padding:10px 18px; border-radius:999px; opacity:0; transition:opacity .25s; pointer-events:none; z-index:99; }
+  .toast.show { opacity:1; }
+  #loginBox { max-width:380px; margin:80px auto; }
+</style>
+</head>
+<body>
+<header>
+  <svg viewBox="0 0 34 34"><circle cx="17" cy="17" r="16" fill="rgba(255,255,255,.18)"/><path d="M6 17c4-6 12-8 18-5l4-4v9l-4 5c-6 3-14 1-18-5z" fill="#fff"/><circle cx="22" cy="14.5" r="1.6" fill="#0F6E56"/></svg>
+  大鱼 · 卡密管理后台
+</header>
+
+<div class="wrap" id="loginBox">
+  <div class="card">
+    <h2>管理员登录</h2>
+    <label>管理令牌</label>
+    <input type="password" id="tokenInput" placeholder="server 启动时打印的 ADMIN_TOKEN">
+    <button class="btn" style="margin-top:12px;width:100%" onclick="login()">进 入</button>
+    <p class="muted" style="margin-top:10px">默认令牌 <code>dayu-admin-2026</code>，正式部署请用环境变量 ADMIN_TOKEN 覆盖。</p>
+  </div>
+</div>
+
+<div class="wrap" id="mainBox" style="display:none">
+  <div class="card">
+    <h2>概览</h2>
+    <div class="stats" id="stats"></div>
+  </div>
+
+  <div class="card">
+    <h2>批量发卡</h2>
+    <div class="form">
+      <div><label>卡类型</label>
+        <select id="fType" style="width:100%;border:1px solid var(--line);border-radius:10px;padding:9px 12px;font-size:14px;outline:none" onchange="onTypeChange()">
+          <option value="permanent">永久卡（一机一码）</option>
+          <option value="timed">时长卡</option>
+        </select>
+      </div>
+      <div id="wrapDays"><label>有效天数</label><input id="fDays" type="number" value="30" min="1"></div>
+      <div id="wrapDev"><label>可绑设备数</label><input id="fDev" type="number" value="1" min="1" max="10" disabled></div>
+      <div><label>数量</label><input id="fCount" type="number" value="10" min="1" max="500"></div>
+      <div><label>备注（可选）</label><input id="fNote" placeholder="如：淘宝店铺订单 #1024"></div>
+      <button class="btn" onclick="gen()">生成卡密</button>
+    </div>
+    <p class="muted" id="genResult" style="margin-top:10px"></p>
+  </div>
+
+  <div class="card">
+    <h2>卡密列表</h2>
+    <div class="toolbar">
+      <button class="btn ghost" onclick="loadCards()">刷新</button>
+      <input id="search" placeholder="搜索卡密/备注…" style="max-width:260px" oninput="renderCards()">
+    </div>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>卡密</th><th>状态</th><th>类型</th><th>有效期</th><th>设备</th><th>激活时间</th><th>备注</th><th>操作</th></tr></thead>
+        <tbody id="cardRows"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let adminToken = sessionStorage.getItem('dayu.admin') || '';
+let cards = [];
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+function fmt(ts) { return ts ? new Date(ts).toLocaleString('zh-CN', { hour12: false }) : '-'; }
+
+async function api(path, opts = {}) {
+  const r = await fetch(path, {
+    ...opts,
+    headers: { 'Content-Type': 'application/json', 'X-Admin-Token': adminToken, ...(opts.headers || {}) },
+  });
+  const d = await r.json().catch(() => ({}));
+  if (r.status === 401) { showLogin(); throw new Error('管理令牌错误'); }
+  if (!r.ok) throw new Error(d.err || r.status);
+  return d;
+}
+
+function showLogin() {
+  document.getElementById('loginBox').style.display = '';
+  document.getElementById('mainBox').style.display = 'none';
+}
+
+async function login() {
+  adminToken = document.getElementById('tokenInput').value.trim();
+  try {
+    await api('/api/admin/stats');
+    sessionStorage.setItem('dayu.admin', adminToken);
+    enter();
+  } catch (e) { toast(e.message); }
+}
+
+async function enter() {
+  document.getElementById('loginBox').style.display = 'none';
+  document.getElementById('mainBox').style.display = '';
+  loadStats(); loadCards();
+}
+
+async function loadStats() {
+  const s = await api('/api/admin/stats');
+  const items = [['总卡数', s.total], ['未使用', s.unused], ['生效中', s.active], ['已过期', s.expired], ['已封禁', s.banned], ['绑定设备', s.devices]];
+  document.getElementById('stats').innerHTML = items.map(([k, v]) => `<div class="stat"><b>${v}</b><span>${k}</span></div>`).join('');
+}
+
+function onTypeChange() {
+  const perm = document.getElementById('fType').value === 'permanent';
+  document.getElementById('wrapDays').style.opacity = perm ? .4 : 1;
+  document.getElementById('fDays').disabled = perm;
+  document.getElementById('fDev').value = 1;
+  document.getElementById('fDev').disabled = perm;
+}
+
+async function gen() {
+  const perm = document.getElementById('fType').value === 'permanent';
+  const body = {
+    type: document.getElementById('fType').value,
+    count: document.getElementById('fCount').value,
+    days: document.getElementById('fDays').value || 30,
+    maxDevices: perm ? 1 : document.getElementById('fDev').value,
+    note: document.getElementById('fNote').value,
+  };
+  const d = await api('/api/admin/cards', { method: 'POST', body: JSON.stringify(body) });
+  document.getElementById('genResult').innerHTML =
+    `批次 <b>${d.batch}</b> 已生成 ${d.cards.length} 张${perm ? '永久卡' : '时长卡'}（已复制到剪贴板）：<br><span class="mono">${d.cards.map((c) => c.cardKey).join('<br>')}</span>`;
+  navigator.clipboard?.writeText(d.cards.map((c) => c.cardKey).join('\n')).catch(() => {});
+  loadStats(); loadCards();
+}
+
+async function loadCards() {
+  const d = await api('/api/admin/cards');
+  cards = d.cards;
+  renderCards(); loadStats();
+}
+
+function renderCards() {
+  const q = document.getElementById('search').value.trim().toUpperCase();
+  const list = cards.filter((c) => !q || c.cardKey.includes(q) || (c.note || '').toUpperCase().includes(q));
+  const now = Date.now();
+  document.getElementById('cardRows').innerHTML = list.map((c) => {
+    let status = c.status;
+    if (c.status === 'active' && c.expiresAt && c.expiresAt <= now) status = 'expired';
+    const label = { unused: '未使用', active: '生效中', banned: '已封禁', expired: '已过期' }[status] || status;
+    const isPerm = c.type === 'permanent';
+    const life = isPerm ? '<span class="pill active">永久</span>' : c.days + '天';
+    return `<tr>
+      <td class="mono">${c.cardKey}</td>
+      <td><span class="pill ${status}">${label}</span></td>
+      <td>${isPerm ? '永久' : '时长'}</td>
+      <td>${life}</td>
+      <td>${c.devices.length}/${c.maxDevices}</td>
+      <td>${fmt(c.activatedAt)}</td>
+      <td class="muted">${c.note || '-'}</td>
+      <td>
+        ${c.status !== 'banned' && status !== 'expired'
+          ? `<button class="btn red" style="padding:5px 10px;font-size:12px" onclick="ban('${c.cardKey}',true)">封禁</button>` : ''}
+        ${c.status === 'banned'
+          ? `<button class="btn ghost" style="padding:5px 10px;font-size:12px" onclick="ban('${c.cardKey}',false)">解封</button>` : ''}
+        ${c.devices.length
+          ? `<button class="btn ghost" style="padding:5px 10px;font-size:12px" onclick="reset('${c.cardKey}')">解绑换机</button>` : ''}
+        <button class="btn ghost" style="padding:5px 10px;font-size:12px" onclick="copyKey('${c.cardKey}')">复制</button>
+      </td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="8" class="muted" style="text-align:center;padding:20px">暂无卡密，先在上面批量生成</td></tr>';
+}
+
+async function reset(key) {
+  if (!confirm('解绑 ' + key + ' 的全部设备？解绑后原设备授权立即失效，卡回到未使用状态。')) return;
+  await api('/api/admin/cards/reset', { method: 'POST', body: JSON.stringify({ cardKey: key }) });
+  toast('已解绑，客户可在新设备重新激活');
+  loadCards();
+}
+
+async function ban(key, banned) {
+  await api('/api/admin/cards/ban', { method: 'POST', body: JSON.stringify({ cardKey: key, banned }) });
+  toast(banned ? '已封禁，客户端立即失效' : '已解封');
+  loadCards();
+}
+
+function copyKey(k) { navigator.clipboard?.writeText(k); toast('已复制 ' + k); }
+
+if (adminToken) {
+  api('/api/admin/stats').then(enter).catch(() => {});
+}
+</script>
+</body>
+</html>

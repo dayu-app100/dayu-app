@@ -1,0 +1,8 @@
+{
+  "appId": "com.dayu.liveassistant",
+  "appName": "大鱼直播助手",
+  "webDir": "www",
+  "ios": {
+    "contentInset": "always"
+  }
+}

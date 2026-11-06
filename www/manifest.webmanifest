@@ -1,0 +1,16 @@
+{
+  "name": "大鱼直播助手",
+  "short_name": "大鱼",
+  "description": "手机直播高清动态背景素材库 · 一机一码永久授权",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F4F6F5",
+  "theme_color": "#1D9E75",
+  "lang": "zh-CN",
+  "icons": [
+    { "src": "icons/icon-180.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}

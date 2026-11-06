@@ -1,0 +1,7 @@
+node_modules/
+ios/
+build/
+out/
+*.ipa
+.DS_Store
+*.log
