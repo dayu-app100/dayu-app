@@ -11,7 +11,7 @@ on:
 
 jobs:
   build:
-    runs-on: macos-14
+    runs-on: macos-15
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
@@ -29,6 +29,13 @@ jobs:
             npx cap add ios
           fi
           npx cap sync ios
+
+      - name: 安装 CocoaPods 依赖
+        run: |
+          cd ios/App
+          which pod || sudo gem install cocoapods
+          pod install --repo-update
+          ls -d App.xcworkspace
 
       - name: 允许明文 HTTP 请求（首次测试用，正式部署请改 HTTPS）
         run: |
