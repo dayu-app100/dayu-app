@@ -1,3 +1,15 @@
+# 大鱼直播助手 · 授权服务器地址（备用通道）
+#
+# 客户端只在「内置候选地址全部不可达」时才来读这个文件，
+# 取第一条 http 开头的行作为服务器地址。注释行以 # 开头，会被忽略。
+#
+# 2026-11-12 更新：自有域名 dayuauth.com 已上线并签发 Let's Encrypt 证书，
+# 排在首位。它是自有资产，不再依赖 sslip.io / nip.io 这类第三方免费 DNS，
+# 也不会因为服务方变更规则而整段失效。后面的 sslip 地址保留作兜底。
+#
+# 必须是 https：抖音 App 的 ATS 策略禁止明文 http，填 http 一定失败。
+# 也不能填裸 IP —— 裸 IP 签不出证书，会被 ATS 直接拦掉。
+
 https://dayuauth.com
 https://www.dayuauth.com
 https://43-155-23-41.sslip.io
